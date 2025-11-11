@@ -16,7 +16,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { API_BASE_URL } from '../utils/apiConfig';
+import { API_BASE_URL, allert } from '../../utils/apiConfig';
+import { TokenManager } from '../../utils/tokenManager';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -94,24 +95,39 @@ export default function SignInScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert(
-          'Success',
-          'Signed in successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // TODO: Navigate to main app screens
-                console.log('User signed in successfully');
+        // Store the authentication token (handle different response formats)
+        const token = data.token || data.data?.token || data.accessToken;
+        if (token) {
+          await TokenManager.storeToken(token);
+          console.log('Authentication token stored:', token.substring(0, 20) + '...');
+        } else {
+          console.warn('No token found in login response:', data);
+        }
+
+        if (allert === 1) {
+          Alert.alert(
+            'Success',
+            'Signed in successfully!',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  router.replace('/profile/profile');
+                }
               }
-            }
-          ]
-        );
+            ]
+          );
+        } else {
+          // Silent success - just navigate
+          router.replace('/profile/profile');
+        }
       } else {
-        Alert.alert(
-          'Sign In Failed',
-          data.message || 'Invalid email or password.'
-        );
+        if (allert === 1) {
+          Alert.alert(
+            'Sign In Failed',
+            data.message || 'Invalid email or password.'
+          );
+        }
       }
     } catch (error) {
       console.error('Sign in error:', error);
@@ -230,7 +246,7 @@ export default function SignInScreen() {
             {/* Sign Up Link */}
             <View style={styles.signUpSection}>
               <Text style={styles.signUpText}>Don&apos;t have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/signUp')}>
+              <TouchableOpacity onPress={() => router.push('/auth/signUp')}>
                 <Text style={styles.signUpLink}>Create Account</Text>
               </TouchableOpacity>
             </View>

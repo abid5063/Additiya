@@ -16,7 +16,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { API_BASE_URL, allert } from '../utils/apiConfig';
+import { API_BASE_URL, allert } from '../../utils/apiConfig';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -108,16 +108,12 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (!validateForm()) {
-      if (allert === 1) {
-        Alert.alert('Validation Failed', 'Please check the form errors and try again.');
-      }
       return;
     }
 
     setIsLoading(true);
 
     try {
-      
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
@@ -142,12 +138,12 @@ export default function SignUpScreen() {
             [
               {
                 text: 'Sign In',
-                onPress: () => router.push('/signIn')
+                onPress: () => router.push('/auth/signIn')
               }
             ]
           );
         } else {
-          router.push('/signIn');
+          router.push('/auth/signIn');
         }
       } else {
         if (allert === 1) {
@@ -157,7 +153,8 @@ export default function SignUpScreen() {
           );
         }
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error('Sign up error:', error);
       if (allert === 1) {
         Alert.alert(
           'Network Error',
@@ -355,7 +352,7 @@ export default function SignUpScreen() {
             {/* Sign In Link */}
             <View style={styles.signInSection}>
               <Text style={styles.signInText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/signIn')}>
+              <TouchableOpacity onPress={() => router.push('/auth/signIn')}>
                 <Text style={styles.signInLink}>Sign In</Text>
               </TouchableOpacity>
             </View>

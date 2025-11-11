@@ -23,11 +23,11 @@ export default function WelcomeScreen() {
   }, [language, i18n, languageLoading]);
 
   const handleSignIn = () => {
-    router.push('/signIn');
+    router.push('/auth/signIn');
   };
 
   const handleSignUp = () => {
-    router.push('/signUp');
+    router.push('/auth/signUp');
   };
 
   const handleLearnMore = () => {
