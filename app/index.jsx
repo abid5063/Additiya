@@ -89,7 +89,7 @@ export default function WelcomeScreen() {
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
             <Image 
-              source={require('../assets/images/logo.jpeg')}
+              source={require('../assets/images/logo.jpg')}
               style={styles.logo}
               resizeMode="cover"
             />
@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
 
         {/* App Title and Tagline Section */}
         <View style={styles.taglineSection}>
-          <Text style={styles.appTitle}>ADDITIYA</Text>
+          {/* <Text style={styles.appTitle}>ADDITIYA</Text> */}
           <Text style={styles.appSubtitle}>AI-Powered Early Detection</Text>
           <Text style={styles.tagline}>{t('tagline') || 'Detect early. Live fully.'}</Text>
           <Text style={styles.subTagline}>{t('subTagline1') || 'Revolutionary breast cancer screening from home'}</Text>

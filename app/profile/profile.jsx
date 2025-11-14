@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,11 +10,14 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import { API_BASE_URL, allert } from '../../utils/apiConfig';
 import { TokenManager } from '../../utils/tokenManager';
 
@@ -26,9 +29,10 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Fetch profile data from API
-  const fetchProfile = async (showLoader = true) => {
+  const fetchProfile = useCallback(async (showLoader = true) => {
     if (showLoader) {
       setIsLoading(true);
     }
@@ -107,7 +111,7 @@ export default function ProfileScreen() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [router]);
 
   // Handle pull-to-refresh
   const onRefresh = () => {
@@ -156,6 +160,193 @@ export default function ProfileScreen() {
     router.push('/profile/profileEdit');
   };
 
+  // Handle health records navigation
+  const handleHealthRecords = () => {
+    try {
+      router.push('/profile/healthRecords');
+    } catch (err) {
+      console.warn('Navigation to health records failed:', err);
+      // Fallback: do nothing
+    }
+  };
+
+  // Handle profile photo upload
+  const handlePhotoUpload = async () => {
+    try {
+      // Request permissions
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        if (allert === 1) {
+          Alert.alert(
+            'Permission Required',
+            'Please allow access to your photo library to upload a profile picture.'
+          );
+        }
+        return;
+      }
+
+      // Show action sheet for camera or gallery
+      if (allert === 1) {
+        Alert.alert(
+          'Select Photo',
+          'Choose how you want to select your profile photo',
+          [
+            {
+              text: 'Camera',
+              onPress: () => openCamera()
+            },
+            {
+              text: 'Gallery',
+              onPress: () => openGallery()
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            }
+          ]
+        );
+      } else {
+        // Default to gallery if alerts are disabled
+        openGallery();
+      }
+    } catch (error) {
+      console.error('Error requesting permissions:', error);
+    }
+  };
+
+  // Open camera to take photo
+  const openCamera = async () => {
+    try {
+      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (cameraPermission.granted === false) {
+        if (allert === 1) {
+          Alert.alert(
+            'Camera Permission Required',
+            'Please allow camera access to take a profile picture.'
+          );
+        }
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadPhoto(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Error opening camera:', error);
+      if (allert === 1) {
+        Alert.alert('Error', 'Failed to open camera. Please try again.');
+      }
+    }
+  };
+
+  // Open gallery to select photo
+  const openGallery = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadPhoto(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Error opening gallery:', error);
+      if (allert === 1) {
+        Alert.alert('Error', 'Failed to open gallery. Please try again.');
+      }
+    }
+  };
+
+  // Upload photo to server
+  const uploadPhoto = async (imageAsset) => {
+    setIsUploadingPhoto(true);
+
+    try {
+      const token = await TokenManager.getToken();
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      // Prepare base64 image data
+      const base64Image = `data:${imageAsset.mimeType || 'image/jpeg'};base64,${imageAsset.base64}`;
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/upload-profile-photo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          image: base64Image
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update profile data with new photo
+        setProfileData(prev => ({
+          ...prev,
+          profile_photo: data.profile_photo || data.data?.profile_photo || data.imageUrl
+        }));
+
+        if (allert === 1) {
+          Alert.alert('Success', 'Profile photo updated successfully!');
+        }
+      } else {
+        if (response.status === 401 || response.status === 403) {
+          await TokenManager.removeToken();
+          throw new Error('Session expired. Please log in again.');
+        } else {
+          throw new Error(data.message || 'Failed to upload profile photo');
+        }
+      }
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      
+      if (error.message.includes('Session expired') || error.message.includes('No authentication token')) {
+        if (allert === 1) {
+          Alert.alert(
+            'Authentication Required',
+            error.message,
+            [
+              {
+                text: 'Go to Login',
+                onPress: () => router.replace('/')
+              }
+            ]
+          );
+        } else {
+          router.replace('/');
+        }
+      } else {
+        if (allert === 1) {
+          Alert.alert(
+            'Upload Failed',
+            error.message || 'Failed to upload profile photo. Please try again.'
+          );
+        }
+      }
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString) => {
     try {
@@ -171,10 +362,20 @@ export default function ProfileScreen() {
   };
 
   // Load profile data on component mount
+  // Initial load
   useEffect(() => {
     fetchProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Refetch profile whenever this screen gains focus (covers navigation back from edit/upload)
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      // no cleanup
+      return () => {};
+    }, [fetchProfile])
+  );
 
   // Loading state
   if (isLoading) {
@@ -264,9 +465,30 @@ export default function ProfileScreen() {
         {/* Profile Header Section */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Ionicons name="person" size={48} color="#4A148C" />
-            </View>
+            <TouchableOpacity style={styles.avatar} onPress={handlePhotoUpload}>
+              {profileData?.profile_photo && profileData.profile_photo !== '' ? (
+                <Image
+                  source={{ uri: profileData.profile_photo }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={styles.defaultAvatar}>
+                  <Ionicons name="person" size={48} color="#4A148C" />
+                </View>
+              )}
+              
+              {/* Upload indicator overlay */}
+              {isUploadingPhoto && (
+                <View style={styles.uploadOverlay}>
+                  <ActivityIndicator size="small" color="#fff" />
+                </View>
+              )}
+              
+              {/* Camera icon overlay */}
+              <View style={styles.cameraIconOverlay}>
+                <Ionicons name="camera" size={20} color="#fff" />
+              </View>
+            </TouchableOpacity>
           </View>
           <Text style={styles.userName}>{profileData?.name || 'User Name'}</Text>
           <Text style={styles.userEmail}>{profileData?.email || 'user@email.com'}</Text>
@@ -346,11 +568,7 @@ export default function ProfileScreen() {
             <Text style={styles.actionButtonText}>Edit Profile</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton} onPress={() => {
-            if (allert === 1) {
-              Alert.alert('Coming Soon', 'Health records feature will be available soon.');
-            }
-          }}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleHealthRecords}>
             <Ionicons name="medical-outline" size={20} color="#4A148C" />
             <Text style={styles.actionButtonText}>Health Records</Text>
           </TouchableOpacity>
@@ -469,6 +687,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 8,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  defaultAvatar: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+  },
+  uploadOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 50,
+  },
+  cameraIconOverlay: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    backgroundColor: '#4A148C',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   userName: {
     fontSize: 28,
