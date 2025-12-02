@@ -185,6 +185,16 @@ export default function ProfileScreen() {
     }
   };
 
+  // Handle how to use navigation
+  const handleHowToUse = () => {
+    try {
+      router.push('/profile/demo');
+    } catch (err) {
+      console.warn('Navigation to demo failed:', err);
+      // Fallback: do nothing
+    }
+  };
+
   // Handle profile photo upload
   const handlePhotoUpload = async () => {
     try {
@@ -645,10 +655,21 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={[styles.fullWidthButton, styles.logoutButton]} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#D32F2F" />
-            <Text style={[styles.gridButtonText, styles.logoutButtonText]}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.actionGrid}>
+            <TouchableOpacity style={styles.gridButton} onPress={handleHowToUse}>
+              <View style={styles.gridButtonIconContainer}>
+                <Ionicons name="help-circle-outline" size={24} color="#4A148C" />
+              </View>
+              <Text style={styles.gridButtonText}>How to Use</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={[styles.gridButton, styles.logoutGridButton]} onPress={handleLogout}>
+              <View style={[styles.gridButtonIconContainer, styles.logoutIconContainer]}>
+                <Ionicons name="log-out-outline" size={24} color="#D32F2F" />
+              </View>
+              <Text style={[styles.gridButtonText, styles.logoutButtonText]}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -906,6 +927,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#4A148C',
     textAlign: 'center',
+  },
+  logoutGridButton: {
+    borderWidth: 1,
+    borderColor: 'rgba(211, 47, 47, 0.3)',
+  },
+  logoutIconContainer: {
+    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+  },
+  logoutButtonText: {
+    color: '#D32F2F',
   },
   fullWidthButton: {
     flexDirection: 'row',
