@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TokenManager } from '../../utils/tokenManager';
 
 // Default matrix for demonstration
 const defaultMatrix = [
@@ -33,11 +34,114 @@ export default function HealthRecordsScreen() {
   const [matrixInput, setMatrixInput] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [detectionRecords, setDetectionRecords] = useState([]);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(true);
 
-  // Load default matrix on mount
+  // Fetch detection records from API
+  const fetchDetectionRecords = async () => {
+    try {
+      const token = await TokenManager.getToken();
+      
+      if (!token) {
+        console.warn('No authentication token found');
+        setIsLoadingRecords(false);
+        return;
+      }
+
+      const response = await fetch('http://localhost:3000/api/records?page=1&limit=10', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDetectionRecords(data.data?.records || data.records || []);
+      } else {
+        console.error('Failed to fetch detection records:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching detection records:', error);
+    } finally {
+      setIsLoadingRecords(false);
+    }
+  };
+
+  // Delete a detection record
+  const deleteRecord = async (recordId) => {
+    try {
+      const token = await TokenManager.getToken();
+      
+      if (!token) {
+        console.warn('Authentication required to delete records.');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:3000/api/records/${recordId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        // Remove the deleted record from state
+        setDetectionRecords(prev => prev.filter(record => record._id !== recordId));
+      } else {
+        console.error('Failed to delete record:', response.status);
+      }
+    } catch (error) {
+      console.error('Error deleting record:', error);
+    }
+  };
+
+
+
+  // Load default matrix and fetch records on mount
   React.useEffect(() => {
     setMatrixInput(JSON.stringify(defaultMatrix, null, 2));
+    fetchDetectionRecords();
   }, []);
+
+  // Save detection result to records API
+  const saveDetectionResult = async (analysisData) => {
+    try {
+      const token = await TokenManager.getToken();
+      
+      if (!token) {
+        console.warn('No authentication token found for saving record');
+        return;
+      }
+
+      const recordData = {
+        lump_detected: analysisData.analysis.lump_detected,
+        confidence_percentage: analysisData.analysis.confidence_percentage
+      };
+
+      // Only include predicted_size_cm if lump is detected
+      if (analysisData.analysis.lump_detected) {
+        recordData.predicted_size_cm = analysisData.analysis.predicted_size_cm;
+      }
+
+      const response = await fetch('http://localhost:3000/api/records', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(recordData),
+      });
+
+      if (response.ok) {
+        console.log('Detection result saved to records successfully');
+      } else {
+        console.error('Failed to save detection result:', response.status);
+      }
+    } catch (error) {
+      console.error('Error saving detection result:', error);
+    }
+  };
 
   // Handle matrix analysis
   const analyzeMatrix = async () => {
@@ -74,6 +178,16 @@ export default function HealthRecordsScreen() {
 
       const result = await response.json();
       setAnalysisResult(result);
+
+      // Automatically save to records for all analyses (lump detected or not)
+      await saveDetectionResult(result);
+      // Refresh records to show the new entry
+      await fetchDetectionRecords();
+      Alert.alert(
+        'Analysis Saved', 
+        'The analysis result has been automatically saved to your health records.',
+        [{ text: 'OK' }]
+      );
     } catch (error) {
       console.error('Analysis error:', error);
       Alert.alert(
@@ -85,29 +199,7 @@ export default function HealthRecordsScreen() {
     }
   };
 
-  const dummyRecords = [
-    {
-      id: '1',
-      date: '2025-10-12',
-      type: 'Mammogram',
-      result: 'Normal',
-      notes: 'No suspicious findings. Follow-up in 1 year.',
-    },
-    {
-      id: '2',
-      date: '2024-09-05',
-      type: 'Clinical Breast Exam',
-      result: 'Normal',
-      notes: 'Routine check, no lumps detected.',
-    },
-    {
-      id: '3',
-      date: '2023-08-20',
-      type: 'Ultrasound',
-      result: 'Benign cyst',
-      notes: 'Benign cyst monitored; no intervention required.',
-    },
-  ];
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -225,20 +317,61 @@ export default function HealthRecordsScreen() {
           </View>
         )}
 
-        {/* Historical Records */}
+        {/* Detection Records */}
         <View style={styles.recordsSection}>
-          <Text style={styles.sectionTitle}>Historical Records</Text>
+          <Text style={styles.sectionTitle}>Previous Detection Records</Text>
           
-          {dummyRecords.map(record => (
-          <View key={record.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{record.type}</Text>
-              <Text style={styles.cardDate}>{new Date(record.date).toLocaleDateString()}</Text>
+          {isLoadingRecords ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.loadingText}>Loading records...</Text>
             </View>
-            <Text style={styles.cardResult}>Result: {record.result}</Text>
-            <Text style={styles.cardNotes}>{record.notes}</Text>
-          </View>
-        ))}
+          ) : detectionRecords.length > 0 ? (
+            detectionRecords.map((record, index) => (
+              <View key={record._id || index} style={styles.detectionCard}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleRow}>
+                    <View style={[styles.statusIndicator, record.lump_detected ? styles.positiveIndicator : styles.negativeIndicator]} />
+                    <Text style={styles.cardTitle}>
+                      {record.lump_detected ? 'Lump Detected' : 'Normal Reading'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => deleteRecord(record._id)}
+                    style={styles.deleteButton}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#FF6B6B" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.recordDetails}>
+                  <Text style={styles.recordDate}>
+                    {new Date(record.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Text>
+                  <Text style={styles.recordConfidence}>
+                    Confidence: {record.confidence_percentage?.toFixed(1)}%
+                  </Text>
+                  {record.predicted_size_cm && (
+                    <Text style={styles.recordSize}>
+                      Predicted Size: {record.predicted_size_cm} cm
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="document-outline" size={48} color="rgba(255,255,255,0.5)" />
+              <Text style={styles.emptyStateText}>No detection records yet</Text>
+              <Text style={styles.emptyStateSubtext}>Perform an analysis to create your first record</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.noteBox}>
@@ -336,4 +469,80 @@ const styles = StyleSheet.create({
   
   // Records Section
   recordsSection: { marginBottom: 16 },
+  
+  // Detection Records Styles
+  detectionCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4A148C',
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  statusIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  positiveIndicator: {
+    backgroundColor: '#FF6B6B',
+  },
+  negativeIndicator: {
+    backgroundColor: '#4CAF50',
+  },
+  deleteButton: {
+    padding: 4,
+    borderRadius: 4,
+  },
+  recordDetails: {
+    marginTop: 8,
+    gap: 4,
+  },
+  recordDate: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  recordConfidence: {
+    fontSize: 14,
+    color: '#4A148C',
+    fontWeight: '600',
+  },
+  recordSize: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 8,
+  },
+  loadingText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 32,
+    gap: 8,
+  },
+  emptyStateText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyStateSubtext: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });

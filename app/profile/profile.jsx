@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
-  Image
+  Image,
+  LayoutAnimation
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -30,6 +31,8 @@ export default function ProfileScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [personalInfoExpanded, setPersonalInfoExpanded] = useState(false);
+  const [accountInfoExpanded, setAccountInfoExpanded] = useState(false);
 
   // Fetch profile data from API
   const fetchProfile = useCallback(async (showLoader = true) => {
@@ -158,6 +161,18 @@ export default function ProfileScreen() {
   // Handle edit profile
   const handleEditProfile = () => {
     router.push('/profile/profileEdit');
+  };
+
+  // Handle personal info panel toggle
+  const togglePersonalInfo = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPersonalInfoExpanded(!personalInfoExpanded);
+  };
+
+  // Handle account info panel toggle
+  const toggleAccountInfo = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setAccountInfoExpanded(!accountInfoExpanded);
   };
 
   // Handle health records navigation
@@ -501,81 +516,138 @@ export default function ProfileScreen() {
 
         {/* Profile Information Cards */}
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          
-          {/* Email Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Ionicons name="mail-outline" size={24} color="#7B1FA2" />
-              <Text style={styles.infoCardTitle}>Email Address</Text>
+          {/* Personal Information Slider */}
+          <TouchableOpacity style={styles.sectionButton} onPress={togglePersonalInfo}>
+            <View style={styles.sectionButtonContent}>
+              <View style={styles.sectionButtonLeft}>
+                <Ionicons name="person-circle-outline" size={24} color="#fff" />
+                <Text style={styles.sectionButtonTitle}>Personal Information</Text>
+              </View>
+              <Ionicons 
+                name={personalInfoExpanded ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="#fff" 
+              />
             </View>
-            <Text style={styles.infoCardValue}>{profileData?.email || 'N/A'}</Text>
-          </View>
+          </TouchableOpacity>
 
-          {/* Phone Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Ionicons name="call-outline" size={24} color="#7B1FA2" />
-              <Text style={styles.infoCardTitle}>Phone Number</Text>
-            </View>
-            <Text style={styles.infoCardValue}>{profileData?.phone || 'N/A'}</Text>
-          </View>
+          {personalInfoExpanded && (
+            <View style={styles.slidingPanel}>
+              {/* Email Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="mail-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Email Address</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{profileData?.email || 'N/A'}</Text>
+              </View>
 
-          {/* Address Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Ionicons name="location-outline" size={24} color="#7B1FA2" />
-              <Text style={styles.infoCardTitle}>Address</Text>
-            </View>
-            <Text style={styles.infoCardValue}>{profileData?.address || 'N/A'}</Text>
-          </View>
+              {/* Phone Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="call-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Phone Number</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{profileData?.phone || 'N/A'}</Text>
+              </View>
 
-          {/* Account Info Section */}
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          
-          {/* Member Since Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Ionicons name="calendar-outline" size={24} color="#7B1FA2" />
-              <Text style={styles.infoCardTitle}>Member Since</Text>
-            </View>
-            <Text style={styles.infoCardValue}>{formatDate(profileData?.createdAt)}</Text>
-          </View>
+              {/* Address Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="location-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Address</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{profileData?.address || 'N/A'}</Text>
+              </View>
 
-          {/* Last Updated Card */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Ionicons name="time-outline" size={24} color="#7B1FA2" />
-              <Text style={styles.infoCardTitle}>Last Updated</Text>
+              {/* Age Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="calendar-number-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Age</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{profileData?.age || 'N/A'}</Text>
+              </View>
             </View>
-            <Text style={styles.infoCardValue}>{formatDate(profileData?.updatedAt)}</Text>
-          </View>
+          )}
 
-          {/* User ID Card (for support purposes) */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardHeader}>
-              <Ionicons name="finger-print-outline" size={24} color="#7B1FA2" />
-              <Text style={styles.infoCardTitle}>User ID</Text>
+          {/* Account Information Slider */}
+          <TouchableOpacity style={styles.sectionButton} onPress={toggleAccountInfo}>
+            <View style={styles.sectionButtonContent}>
+              <View style={styles.sectionButtonLeft}>
+                <Ionicons name="shield-checkmark-outline" size={24} color="#fff" />
+                <Text style={styles.sectionButtonTitle}>Account Information</Text>
+              </View>
+              <Ionicons 
+                name={accountInfoExpanded ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="#fff" 
+              />
             </View>
-            <Text style={styles.infoCardValue}>{profileData?._id || 'N/A'}</Text>
-          </View>
+          </TouchableOpacity>
+
+          {accountInfoExpanded && (
+            <View style={styles.slidingPanel}>
+              {/* Member Since Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="calendar-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Member Since</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{formatDate(profileData?.createdAt)}</Text>
+              </View>
+
+              {/* Last Updated Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="time-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Last Updated</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{formatDate(profileData?.updatedAt)}</Text>
+              </View>
+
+              {/* User ID Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="finger-print-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>User ID</Text>
+                </View>
+                <Text style={styles.infoCardValue}>{profileData?._id || 'N/A'}</Text>
+              </View>
+
+              {/* Account Status Card */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardHeader}>
+                  <Ionicons name="checkmark-circle-outline" size={20} color="#7B1FA2" />
+                  <Text style={styles.infoCardTitle}>Account Status</Text>
+                </View>
+                <Text style={[styles.infoCardValue, styles.statusActive]}>Active</Text>
+              </View>
+            </View>
+          )}
         </View>
 
-        {/* Action Buttons */}
+        {/* Action Buttons Grid */}
         <View style={styles.actionSection}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleEditProfile}>
-            <Ionicons name="settings-outline" size={20} color="#4A148C" />
-            <Text style={styles.actionButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
+          <View style={styles.actionGrid}>
+            <TouchableOpacity style={styles.gridButton} onPress={handleEditProfile}>
+              <View style={styles.gridButtonIconContainer}>
+                <Ionicons name="settings-outline" size={24} color="#4A148C" />
+              </View>
+              <Text style={styles.gridButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.gridButton} onPress={handleHealthRecords}>
+              <View style={styles.gridButtonIconContainer}>
+                <Ionicons name="medical-outline" size={24} color="#4A148C" />
+              </View>
+              <Text style={styles.gridButtonText}>Health Records</Text>
+            </TouchableOpacity>
+          </View>
           
-          <TouchableOpacity style={styles.actionButton} onPress={handleHealthRecords}>
-            <Ionicons name="medical-outline" size={20} color="#4A148C" />
-            <Text style={styles.actionButtonText}>Health Records</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.actionButton, styles.logoutActionButton]} onPress={handleLogout}>
+          <TouchableOpacity style={[styles.fullWidthButton, styles.logoutButton]} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#D32F2F" />
-            <Text style={[styles.actionButtonText, styles.logoutActionButtonText]}>Logout</Text>
+            <Text style={[styles.gridButtonText, styles.logoutButtonText]}>Logout</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -798,32 +870,102 @@ const styles = StyleSheet.create({
   actionSection: {
     paddingHorizontal: 24,
     paddingTop: 20,
+    gap: 16,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  actionButton: {
+  gridButton: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    gap: 8,
+  },
+  gridButtonIconContainer: {
+    width: 50,
+    height: 50,
+    backgroundColor: 'rgba(74, 20, 140, 0.1)',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  gridButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4A148C',
+    textAlign: 'center',
+  },
+  fullWidthButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
-    gap: 15,
+    gap: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4A148C',
-  },
   logoutActionButton: {
     borderWidth: 1,
     borderColor: 'rgba(211, 47, 47, 0.3)',
   },
-  logoutActionButtonText: {
-    color: '#D32F2F',
+  
+  // Sliding Panel Styles
+  sectionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  sectionButtonLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionButtonTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  slidingPanel: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  statusActive: {
+    color: '#4CAF50',
+    fontWeight: '600',
   },
 });
