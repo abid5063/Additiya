@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TokenManager } from '../../utils/tokenManager';
+import { API_BASE_URL, API_BASE_URL_analyze } from '../../utils/apiConfig';
 
 // Default matrix for demonstration
 const defaultMatrix = [
@@ -48,7 +49,7 @@ export default function HealthRecordsScreen() {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/records?page=1&limit=10', {
+      const response = await fetch(`${API_BASE_URL}/api/records?page=1&limit=10`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -78,7 +79,7 @@ export default function HealthRecordsScreen() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/records/${recordId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/records/${recordId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -124,7 +125,7 @@ export default function HealthRecordsScreen() {
         recordData.predicted_size_cm = analysisData.analysis.predicted_size_cm;
       }
 
-      const response = await fetch('http://localhost:3000/api/records', {
+      const response = await fetch(`${API_BASE_URL}/api/records`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,7 +165,7 @@ export default function HealthRecordsScreen() {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/analyze', {
+      const response = await fetch(`${API_BASE_URL_analyze}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

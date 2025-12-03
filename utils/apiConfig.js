@@ -3,7 +3,16 @@
 // Try different configurations based on your setup:
 
 // Option 1: If running backend on localhost:3000 and testing on web
+
+
+
 export const API_BASE_URL = 'http://localhost:3000';
+// export const API_BASE_URL = 'http://52.184.80.117:80';
+
+
+export const API_BASE_URL_analyze = 'http://localhost:5000';
+// export const API_BASE_URL_analyze = 'http://52.184.80.117:80';
+
 export const allert=0;
 
 // Option 2: If testing on Android Emulator, use this instead:
