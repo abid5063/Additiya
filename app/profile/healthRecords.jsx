@@ -30,6 +30,41 @@ const defaultMatrix = [
   [1.0, 1.1, 1.0, 1.1, 1.0, 1.1, 1.0, 1.2]
 ];
 
+// Matrix datasets for receive functionality
+const matrixDatasets = [
+  [
+    [21.1, 20.8, 21.3, 20.5, 21.0, 20.9, 21.2, 20.7],
+    [20.9, 21.4, 20.6, 21.1, 20.8, 21.0, 20.7, 21.3],
+    [21.2, 20.7, 21.0, 20.9, 21.4, 20.6, 21.1, 20.8],
+    [20.8, 21.1, 20.9, 21.3, 20.5, 21.2, 20.7, 21.0],
+    [21.0, 20.6, 21.2, 20.8, 21.1, 20.9, 21.4, 20.5],
+    [20.7, 21.3, 20.9, 21.0, 20.8, 21.1, 20.6, 21.2],
+    [21.1, 20.5, 21.4, 20.7, 21.0, 20.9, 21.3, 20.8],
+    [20.9, 21.2, 20.6, 21.1, 20.8, 21.0, 20.7, 21.4],
+    [21.3, 20.8, 21.0, 20.9, 21.2, 20.5, 21.1, 20.6],
+    [20.6, 21.4, 20.7, 21.3, 20.9, 21.0, 20.8, 21.1],
+    [21.0, 20.9, 21.1, 20.6, 21.4, 20.7, 21.3, 20.8],
+    [20.8, 21.2, 20.5, 21.0, 20.9, 21.1, 20.6, 21.4],
+    [21.4, 20.7, 21.3, 20.8, 21.0, 20.9, 21.2, 20.5],
+    [20.9, 21.1, 20.6, 21.4, 20.7, 21.3, 20.8, 21.0],
+    [21.2, 20.5, 21.0, 20.9, 21.1, 20.6, 21.4, 20.7]
+  ],
+  [
+    [19.2, 18.7, 20.1, 19.5, 18.9, 19.8, 20.0, 19.4],
+    [95.3, 142.7, 23.8, 20.2, 19.6, 18.5, 19.3, 20.1],
+    [138.9, 187.4, 156.2, 26.1, 20.0, 19.7, 18.8, 19.2],
+    [162.1, 219.8, 245.3, 189.6, 28.7, 19.1, 20.4, 18.6],
+    [145.7, 203.2, 267.9, 231.4, 162.8, 25.3, 19.9, 20.2],
+    [118.4, 176.5, 238.6, 198.7, 134.2, 89.1, 22.5, 19.5],
+    [89.6, 134.8, 189.3, 156.1, 95.7, 67.4, 24.8, 18.9],
+    [67.2, 98.4, 142.6, 112.8, 78.3, 45.2, 21.7, 20.3],
+    [34.5, 52.1, 76.8, 58.9, 39.6, 26.4, 20.0, 19.8],
+    [22.8, 28.3, 35.7, 29.1, 23.5, 21.2, 19.4, 18.7],
+    [20.5, 19.9, 21.4, 20.8, 19.6, 18.3, 20.1, 19.0],
+    [18.8, 20.2, 19.7, 18.4, 20.0, 19.5, 18.9, 19.6]
+  ]
+];
+
 export default function HealthRecordsScreen() {
   const router = useRouter();
   const [matrixInput, setMatrixInput] = useState('');
@@ -37,6 +72,7 @@ export default function HealthRecordsScreen() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [detectionRecords, setDetectionRecords] = useState([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(true);
+  const [currentMatrixIndex, setCurrentMatrixIndex] = useState(0);
 
   // Fetch detection records from API
   const fetchDetectionRecords = async () => {
@@ -161,7 +197,7 @@ export default function HealthRecordsScreen() {
 
       // Validate matrix format
       if (!Array.isArray(matrix) || !Array.isArray(matrix[0])) {
-        Alert.alert('Invalid Matrix', 'Matrix must be a 2D array.');
+        Alert.alert('Invalid Data', 'Data must be a 2D array.');
         return;
       }
 
@@ -193,14 +229,19 @@ export default function HealthRecordsScreen() {
       console.error('Analysis error:', error);
       Alert.alert(
         'Analysis Failed',
-        error.message || 'Failed to analyze matrix. Please check your connection and try again.'
+        error.message || 'Failed to analyze data. Please check your connection and try again.'
       );
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-
+  // Handle receive button - toggle between matrix datasets
+  const handleReceive = () => {
+    const nextIndex = (currentMatrixIndex + 1) % matrixDatasets.length;
+    setCurrentMatrixIndex(nextIndex);
+    setMatrixInput(JSON.stringify(matrixDatasets[nextIndex], null, 2));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -228,11 +269,11 @@ export default function HealthRecordsScreen() {
         <View style={styles.analysisSection}>
           <Text style={styles.sectionTitle}>Breast Tissue Analysis</Text>
           <Text style={styles.sectionDescription}>
-            Enter a stiffness matrix from ultrasound elastography data (8x8 format recommended)
+            Enter a stiffness data from pressure sensitive elastography data (8x8 format recommended)
           </Text>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Matrix Data (JSON Format):</Text>
+            <Text style={styles.inputLabel}> Data (JSON Format):</Text>
             <TextInput
               style={styles.matrixInput}
               value={matrixInput}
@@ -244,19 +285,36 @@ export default function HealthRecordsScreen() {
             />
           </View>
 
+          <View style={styles.buttonRow}>
+            <TouchableOpacity 
+              style={[styles.analyzeButton, isAnalyzing && styles.buttonDisabled]}
+              onPress={analyzeMatrix}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="analytics" size={20} color="#fff" />
+              )}
+              <Text style={styles.analyzeButtonText}>
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Data'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.receiveButton}
+              onPress={handleReceive}
+            >
+              <Ionicons name="download" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity 
-            style={[styles.analyzeButton, isAnalyzing && styles.buttonDisabled]}
-            onPress={analyzeMatrix}
-            disabled={isAnalyzing}
+            style={styles.helpButton}
+            onPress={() => router.push('/profile/help')}
           >
-            {isAnalyzing ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Ionicons name="analytics" size={20} color="#fff" />
-            )}
-            <Text style={styles.analyzeButtonText}>
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Matrix'}
-            </Text>
+            <Ionicons name="help-circle" size={20} color="#fff" />
+            <Text style={styles.helpButtonText}>Get Help</Text>
           </TouchableOpacity>
         </View>
 
@@ -431,6 +489,11 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     minHeight: 120,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   analyzeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -439,9 +502,29 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     gap: 8,
+    flex: 1,
+  },
+  receiveButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7B1FA2',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   buttonDisabled: { opacity: 0.6 },
   analyzeButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  helpButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF6B6B',
+    padding: 14,
+    borderRadius: 8,
+    gap: 8,
+    marginTop: 12,
+  },
+  helpButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   
   // Results Styles
   resultsSection: { marginBottom: 24 },

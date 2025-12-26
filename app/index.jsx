@@ -43,9 +43,9 @@ export default function WelcomeScreen() {
   if (languageLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#663399" />
+        <StatusBar barStyle="light-content" backgroundColor="#993392ff" />
         <LinearGradient
-          colors={['#4A148C', '#7B1FA2', '#BA68C8', '#E1BEE7']}
+          colors={['#760467ff', '#83156fff', '#c8689dff', '#e7bedcff']}
           style={styles.gradientBackground}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -59,11 +59,11 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}> 
-      <StatusBar barStyle="light-content" backgroundColor="#663399" />
+      <StatusBar barStyle="light-content" backgroundColor="#800e78ff" />
       
       {/* Purple Gradient Background */}
       <LinearGradient
-        colors={['#4A148C', '#7B1FA2', '#BA68C8', '#E1BEE7']}
+        colors={['#740560ff', '#760465ff', '#c868beff', '#e7beddff']}
         style={styles.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -89,13 +89,13 @@ export default function WelcomeScreen() {
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
             <Image 
-              source={require('../assets/images/logo.jpg')}
+              source={require('../assets/images/additiya_logo.jpeg')}
               style={styles.logo}
               resizeMode="cover"
             />
             {/* Logo purple blend overlay */}
             <LinearGradient
-              colors={['rgba(225, 190, 231, 0.97)', 'rgba(123, 31, 162, 0.61)', 'rgba(156, 39, 176, 0.1)', 'transparent']}
+              colors={['rgba(231, 190, 216, 0.97)', 'rgba(109, 10, 79, 0.61)', 'rgba(60, 9, 43, 0.1)', 'transparent']}
               style={styles.logoBlendOverlay}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -117,7 +117,7 @@ export default function WelcomeScreen() {
             onPress={handleLearnMore}
             activeOpacity={0.7}
           >
-            <Ionicons name="logo-youtube" size={20} color="#663399" />
+            <Ionicons name="logo-youtube" size={20} color="#8e0b78ff" />
             <Text style={styles.learnMoreText}>{t('subTagline2') || 'Learn about early detection'}</Text>
           </TouchableOpacity>
         </View>
@@ -130,7 +130,7 @@ export default function WelcomeScreen() {
             testID="sign-in-button"
             activeOpacity={0.8}
           >
-            <Ionicons name="log-in-outline" size={28} color='#4A148C' />
+            <Ionicons name="log-in-outline" size={28} color='#6f056fff' />
             <Text style={styles.buttonText}>{t('signIn') || 'Sign In'}</Text>
           </TouchableOpacity>
 
@@ -140,7 +140,7 @@ export default function WelcomeScreen() {
             testID="sign-up-button"
             activeOpacity={0.8}
           >
-            <Ionicons name="person-add-outline" size={28} color='#4A148C'/>
+            <Ionicons name="person-add-outline" size={28} color='#670961ff'/>
             <Text style={styles.buttonText}>{t('signUp') || 'Sign Up'}</Text>
           </TouchableOpacity>
         </View>
@@ -148,7 +148,7 @@ export default function WelcomeScreen() {
 
       {/* Bottom gradient overlay */}
       <LinearGradient
-        colors={['transparent','rgba(225, 190, 231, 1)',  'rgba(186, 104, 200, 1)']}
+        colors={['transparent','rgba(231, 190, 212, 1)',  'rgba(200, 104, 181, 1)']}
         style={styles.bottomOverlay}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -176,11 +176,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   logoSection: {
-    flex: 1, //don't change
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 12,
     marginTop: 2,
+    marginBottom: 2,
   },
   logoContainer: {
     width: '120%',
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   appTitle: {
     fontSize: 36,
     fontWeight: '800',
-    color: '#4A148C',
+    color: '#77056aff',
     textAlign: 'center',
     letterSpacing: 1.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   appSubtitle: {
     fontSize: 16,
-    color: '#6A1B9A',
+    color: '#8f076bff',
     textAlign: 'center',
     fontWeight: '600',
     letterSpacing: 1,
@@ -249,13 +249,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 2,
     gap: 6,
+    flex: 1,
+    justifyContent: 'center',
   },
   tagline: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#6A1B9A',
+    color: '#000000ff',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 2,
     lineHeight: 28,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
@@ -263,14 +265,14 @@ const styles = StyleSheet.create({
   },
   subTagline: {
     fontSize: 18,
-    color: '#8E24AA',
+    color: '#000000ff',
     textAlign: 'center',
     fontWeight: '400',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
     paddingBottom: 6,
-    marginBottom: 8,
+    marginBottom: 2,
   },
   learnMoreButton: {
     flexDirection: 'row',
@@ -282,11 +284,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(74, 20, 140, 0.15)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-    gap: 10,
+    gap: 5,
   },
   learnMoreText: {
     fontSize: 16,
-    color:'#6A1B9A',
+    color:'#9a1b78ff',
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   buttonText: {
-    color: '#4A148C',
+    color: '#7f1178ff',
     fontSize: 20,
     fontWeight: '600',
     letterSpacing: 0.5,
@@ -351,7 +353,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   langButtonText: {
-    color: '#4A148C',
+    color: '#8a096eff',
     fontWeight: 'bold',
     fontSize: 16,
   },

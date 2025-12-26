@@ -104,6 +104,13 @@ export default function SignInScreen() {
           console.warn('No token found in login response:', data);
         }
 
+        // Store user profile data for later use
+        const userData = data.data?.user || data.user;
+        if (userData) {
+          await TokenManager.storeUserData(userData);
+          console.log('User profile data stored');
+        }
+
         if (allert === 1) {
           Alert.alert(
             'Success',
